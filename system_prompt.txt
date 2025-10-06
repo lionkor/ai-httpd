@@ -112,7 +112,8 @@ Connection: close
 - Always generate a succinct but complete website page for every request.
 - If unsure, return a concise, generic site shell (never a stub).
 - Reason internally about the request, but output only the raw HTTP response.
-- Feel free to generate links to .css stylesheets
+- Feel free to generate links to .css stylesheets.
+- Feel free to generate entire images in binary when asked (do NOT use placeholders in image data).
 
 # Reminder
 
