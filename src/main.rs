@@ -37,13 +37,20 @@ async fn main() {
             let mut messages = messages.clone();
             loop {
                 let mut buf = vec![];
-                // read as much as we can form this network socket, not via read_to_end
-                match socket.read_buf(&mut buf).await {
-                    Ok(0) => return, // connection closed
-                    Ok(_) => {}
-                    Err(err) => {
-                        eprintln!("Failed to read from socket: {}", err);
-                        return;
+                loop {
+                    let mut temp_buf = [0u8; 2048];
+                    match socket.read(&mut temp_buf).await {
+                        Ok(0) => return, // connection closed
+                        Ok(n) => {
+                            buf.extend_from_slice(&temp_buf[..n]);
+                            if buf.windows(4).any(|w| w == b"\r\n\r\n") {
+                                break;
+                            }
+                        }
+                        Err(err) => {
+                            eprintln!("Failed to read from socket: {}", err);
+                            return;
+                        }
                     }
                 }
 
@@ -83,7 +90,8 @@ async fn main() {
                     parts = returned_message.split("\n\n").collect::<Vec<&str>>();
                 }
                 let headers = parts.get(0).unwrap_or(&"");
-                let body = parts.get(1).unwrap_or(&"");
+                // the rest is the body
+                let body = parts[1..].join("\n\n");
 
                 // remove lines Content-Length and the HTTP header from the string
                 let headers = headers
